@@ -1656,6 +1656,7 @@ chime_voice_regions = [
               "signatureVersions" => ["s3", "s3v4"]
             },
             "eu-south-1" => %{},
+            "eu-south-2" => %{},
             "eu-west-2" => %{},
             "eu-west-3" => %{},
             "eu-north-1" => %{},
