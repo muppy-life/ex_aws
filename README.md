@@ -2,7 +2,7 @@
 
 <!-- MDOC !-->
 
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/ex-aws/ex_aws/on-push)
+[![GitHub Workflow Status](https://github.com/ex-aws/ex_aws/actions/workflows/on-push.yml/badge.svg)](https://github.com/ex-aws/ex_aws/actions/workflows/on-push.yml)
 [![hex.pm](https://img.shields.io/hexpm/v/ex_aws.svg)](https://hex.pm/packages/ex_aws)
 [![hex.pm](https://img.shields.io/hexpm/dt/ex_aws.svg)](https://hex.pm/packages/ex_aws)
 [![hex.pm](https://img.shields.io/hexpm/l/ex_aws.svg)](https://hex.pm/packages/ex_aws)
@@ -55,13 +55,14 @@ the equivalent of:
 
 ```elixir
 config :ex_aws,
-  access_key_id: [{:system, "AWS_ACCESS_KEY_ID"}, :instance_role],
-  secret_access_key: [{:system, "AWS_SECRET_ACCESS_KEY"}, :instance_role]
+  access_key_id: [{:system, "AWS_ACCESS_KEY_ID"}, :pod_identity, :instance_role],
+  secret_access_key: [{:system, "AWS_SECRET_ACCESS_KEY"}, :pod_identity, :instance_role]
 ```
 
 This means it will try to resolve credentials in order:
 
 * Look for the AWS standard `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` environment variables
+* Try to use [EKS Pod Identity](https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html) if running on EKS with Pod Identity configured
 * Resolve credentials with IAM
   * If running inside ECS and a [task role](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html) has been assigned it will use it
   * Otherwise it will fall back to the [instance role](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html)
@@ -80,9 +81,18 @@ variable, you can use that with `{:awscli, :system, timeout}`
 
 ```elixir
 config :ex_aws,
-  access_key_id: [{:system, "AWS_ACCESS_KEY_ID"}, {:awscli, "default", 30}, :instance_role],
-  secret_access_key: [{:system, "AWS_SECRET_ACCESS_KEY"}, {:awscli, "default", 30}, :instance_role]
+  access_key_id: [{:system, "AWS_ACCESS_KEY_ID"}, {:awscli, "default", 30}, :pod_identity, :instance_role],
+  secret_access_key: [{:system, "AWS_SECRET_ACCESS_KEY"}, {:awscli, "default", 30}, :pod_identity, :instance_role]
 ```
+
+### EKS Pod Identity configuration
+
+For applications running on Amazon EKS, ExAws supports [EKS Pod Identity](https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html) for credential resolution. Pod Identity automatically injects the required environment variables into your pods when properly configured:
+
+* `AWS_CONTAINER_CREDENTIALS_FULL_URI` - The endpoint URL for credential retrieval
+* `AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE` - Path to the JWT token file
+
+No additional configuration is required in ExAws - it will automatically detect and use Pod Identity credentials when these environment variables are present. Pod Identity provides improved security and isolation compared to instance roles by providing pod-level credential scoping.
 
 For role based authentication via `role_arn` and `source_profile` an additional
 dependency is required:
@@ -104,6 +114,17 @@ config :ex_aws,
   security_token: {:system, "AWS_SESSION_TOKEN"},
   secret_access_key: {:system, "AWS_SECRET_ACCESS_KEY"}
 ```
+
+**Important:** When using instance roles, you must include both the environment variable and `:instance_role` in the `security_token` configuration, as instance roles also generate session tokens:
+
+```elixir
+config :ex_aws,
+  access_key_id: [{:system, "AWS_ACCESS_KEY_ID"}, :instance_role],
+  secret_access_key: [{:system, "AWS_SECRET_ACCESS_KEY"}, :instance_role],
+  security_token: [{:system, "AWS_SESSION_TOKEN"}, :instance_role]
+```
+
+Without this configuration, instance role authentication may fail silently or produce authentication errors.
 
 ### Hackney configuration
 
@@ -254,15 +275,20 @@ config :ex_aws, :retries,
 ```
 
 * `max_attempts` is the maximum number of possible attempts with backoffs in between each one
+* `max_attempts_client` may be set to a different value for client errors (4xx) (default is `max_attempts`)
 * `base_backoff_in_ms` corresponds to the `base` value described in the blog post
 * `max_backoff_in_ms` corresponds to the `cap` value described in the blog post
 
-## Testing
+## Testing ExAws
 
 If you want to run `mix test`, you'll need to have a local `dynamodb` running
-on port 8000.  See [Setting up DynamoDB Local](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.DownloadingAndRunning.html).
+on port 8000:
 
-The redirect test will intentionally cause a warning to be issued.
+```console
+docker run --rm -d -p 8000:8000 amazon/dynamodb-local -jar DynamoDBLocal.jar -port 8000
+```
+
+For more info please see [Setting up DynamoDB Local](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.DownloadingAndRunning.html).
 
 ## License
 

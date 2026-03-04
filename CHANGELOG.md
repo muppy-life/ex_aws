@@ -1,3 +1,65 @@
+v2.6.1 (2025-12-09)
+- Endpoint updates
+- Document security_token configuration requirement for instance roles
+
+v2.6.0 (2025-10-03)
+- Endpoint updates
+- Update to support OTP 28
+- Fix geo operations for geo-places and geo-routes services
+- Hide warning while running tests
+- Fix bucket_as_host with virtual_host causing double bucket in URLs
+- Add HTTP method to debug log for requests
+- Add EKS pod identity credential provider
+
+v2.5.11 (2025-08-12)
+- Endpoint updates
+
+v2.5.10 (2025-06-16)
+- Fix crash on SSO credentials error
+- Fix type error on `ExAws.Operation.RestQuery.stream!2`
+- Fix build status shield on README
+
+v2.5.9 (2025-04-15)
+- Endpoint updates
+- Fixes for Req support, update minimum version to 0.5.10
+- Do not warn when optional deps are not available
+- Implement retries for TooManyRequestsException
+- Move regexes out of module attributes to fix compatibility with OTP 28
+
+v2.5.8 (2024-12-13)
+- Fix Req :follow_redirects deprecation warning
+- Add exclude_patterns to filter out temporary files
+
+v2.5.7 (2024-10-31)
+- Endpoint updates
+- Configurable max attempts for client-specific errors (4xx) using `max_attempts_client` in `retries` config
+- Fix `follow_redirect` option handling for `req` client
+
+v2.5.6 (2024-10-09)
+- Endpoint updates
+
+v2.5.5 (2024-09-10)
+- Endpoint updates
+- Drop support for Elixir 1.12
+- Add support for Elixir 1.17
+- Add Req request backend
+- Stop sending `content-length` header for DELETE and HEAD requests
+- Fix handling of `[profile <name>]` blocks in config file
+- Update test platform to Ubuntu 24.04
+
+v2.5.4 (2024-06-04)
+- Endpoint and region updates
+- Add support for Elixir 1.16
+- Drop support for Elixir 1.11
+- Add support for `sso_session` in `.aws/config`
+- Add support for EventBridge Pipes service
+- Add support for Pinpoint Mobiletargeting service
+- Add docs for running DynamoDB locally
+- Allow iodata body in s3 requests
+
+v2.5.3 (2024-03-20)
+- Add mappings for Chime
+
 v2.5.2 (2024-03-19)
 - Endpoint updates
 

@@ -4,8 +4,8 @@ defmodule ExAws.Config.Defaults do
   """
 
   @common %{
-    access_key_id: [{:system, "AWS_ACCESS_KEY_ID"}, :instance_role],
-    secret_access_key: [{:system, "AWS_SECRET_ACCESS_KEY"}, :instance_role],
+    access_key_id: [{:system, "AWS_ACCESS_KEY_ID"}, :pod_identity, :instance_role],
+    secret_access_key: [{:system, "AWS_SECRET_ACCESS_KEY"}, :pod_identity, :instance_role],
     http_client: ExAws.Request.Hackney,
     json_codec: Jason,
     retries: [
@@ -82,6 +82,16 @@ defmodule ExAws.Config.Defaults do
     |> Map.merge(defaults(:geo))
   end
 
+  def defaults(:places_v2) do
+    %{service_override: :"geo-places"}
+    |> Map.merge(defaults(:"geo-places"))
+  end
+
+  def defaults(:routes_v2) do
+    %{service_override: :"geo-routes"}
+    |> Map.merge(defaults(:"geo-routes"))
+  end
+
   def defaults(chime_service)
       when chime_service in [
              :"chime-sdk-media-pipelines",
@@ -110,15 +120,9 @@ defmodule ExAws.Config.Defaults do
     |> Map.put(:host, host(service, region))
   end
 
-  @partitions [
-    {~r/^(us|eu|af|ap|sa|ca|me)\-\w+-\d?-?\w+$/, "aws"},
-    {~r/^cn\-\w+\-\d+$/, "aws-cn"},
-    {~r/^us\-gov\-\w+\-\d+$/, "aws-us-gov"}
-  ]
-
   def host(service, region) do
     partition =
-      Enum.find(@partitions, fn {regex, _} ->
+      Enum.find(partitions(), fn {regex, _} ->
         Regex.run(regex, region)
       end)
 
@@ -126,6 +130,13 @@ defmodule ExAws.Config.Defaults do
       do_host(partition, service, region)
     end
   end
+
+  defp partitions(),
+    do: [
+      {~r/^(us|eu|af|ap|sa|ca|me)\-\w+-\d?-?\w+$/, "aws"},
+      {~r/^cn\-\w+\-\d+$/, "aws-cn"},
+      {~r/^us\-gov\-\w+\-\d+$/, "aws-us-gov"}
+    ]
 
   defp service_map(:ses), do: "email"
   defp service_map(:sagemaker_runtime), do: "runtime.sagemaker"
@@ -136,11 +147,11 @@ defmodule ExAws.Config.Defaults do
   defp service_map(:iot_data), do: "data.iot"
   defp service_map(:ingest_timestream), do: "ingest.timestream"
   defp service_map(:query_timestream), do: "query.timestream"
-  defp service_map(:places), do: "places.geo"
+  defp service_map(place_service) when place_service in [:places, :places_v2], do: "places.geo"
   defp service_map(:maps), do: "maps.geo"
   defp service_map(:geofencing), do: "geofencing.geo"
   defp service_map(:tracking), do: "tracking.geo"
-  defp service_map(:routes), do: "routes.geo"
+  defp service_map(route_service) when route_service in [:routes, :routes_v2], do: "routes.geo"
 
   defp service_map(service) do
     service

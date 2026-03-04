@@ -31,7 +31,8 @@ defmodule ExAws.Request do
 
       if config[:debug_requests] do
         Logger.debug(
-          "ExAws: Request URL: #{inspect(safe_url)} HEADERS: #{inspect(full_headers)} BODY: #{inspect(req_body)} ATTEMPT: #{attempt}"
+          "ExAws: #{Atom.to_string(method) |> String.upcase()} Request URL: #{inspect(safe_url)} " <>
+            "HEADERS: #{inspect(full_headers)} BODY: #{inspect(req_body)} ATTEMPT: #{attempt}"
         )
       end
 
@@ -53,7 +54,7 @@ defmodule ExAws.Request do
                 config,
                 headers,
                 req_body,
-                attempt_again?(attempt, reason, config)
+                attempt_again?(attempt, reason, :client, config)
               )
 
             {:error, reason} ->
@@ -71,7 +72,7 @@ defmodule ExAws.Request do
             config,
             headers,
             req_body,
-            attempt_again?(attempt, reason, config)
+            attempt_again?(attempt, reason, :server, config)
           )
 
         {:error, reason_struct} ->
@@ -92,7 +93,7 @@ defmodule ExAws.Request do
             config,
             headers,
             req_body,
-            attempt_again?(attempt, reason, config)
+            attempt_again?(attempt, reason, :other, config)
           )
       end
     end
@@ -172,6 +173,10 @@ defmodule ExAws.Request do
     {:retry, {type, message}}
   end
 
+  def handle_aws_error({"TooManyRequestsException" = type, message, _}) do
+    {:retry, {type, message}}
+  end
+
   def handle_aws_error({type, message, %{"expectedSequenceToken" => expected_sequence_token}}) do
     {:error, {type, message, expected_sequence_token}}
   end
@@ -200,8 +205,14 @@ defmodule ExAws.Request do
     end
   end
 
-  def attempt_again?(attempt, reason, config) do
-    if attempt >= config[:retries][:max_attempts] do
+  def attempt_again?(attempt, reason, error_type, config) do
+    max_attempts =
+      case error_type do
+        :client -> config[:retries][:client_error_max_attempts] || config[:retries][:max_attempts]
+        _ -> config[:retries][:max_attempts]
+      end
+
+    if attempt >= max_attempts do
       {:error, reason}
     else
       attempt |> backoff(config)

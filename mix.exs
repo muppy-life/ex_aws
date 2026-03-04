@@ -2,13 +2,13 @@ defmodule ExAws.Mixfile do
   use Mix.Project
 
   @source_url "https://github.com/ex-aws/ex_aws"
-  @version "2.5.2"
+  @version "2.6.1"
 
   def project do
     [
       app: :ex_aws,
       version: @version,
-      elixir: "~> 1.11",
+      elixir: "~> 1.13",
       elixirc_paths: elixirc_paths(Mix.env()),
       description: "Generic AWS client",
       name: "ExAws",
@@ -25,6 +25,12 @@ defmodule ExAws.Mixfile do
         "coveralls.detail": :test,
         "coveralls.post": :test,
         "coveralls.html": :test
+      ],
+      xref: [
+        exclude: [
+          :hackney,
+          Req
+        ]
       ]
     ]
   end
@@ -39,19 +45,18 @@ defmodule ExAws.Mixfile do
   defp deps() do
     [
       {:telemetry, "~> 0.4.3 or ~> 1.0"},
-      # mime 2.x requires Elixir ~> 1.10
       {:mime, "~> 1.2 or ~> 2.0"},
       {:bypass, "~> 2.1", only: :test},
-      {:configparser_ex, "~> 4.0", optional: true},
+      {:configparser_ex, "~> 5.0", optional: true},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.16", only: [:dev, :test]},
       {:hackney, "~> 1.16", optional: true},
+      {:req, "~> 0.5.10 or ~> 0.6 or ~> 1.0", optional: true},
       {:jason, "~> 1.1", optional: true},
       {:jsx, "~> 2.8 or ~> 3.0", optional: true},
       {:mox, "~> 1.0", only: :test},
       {:sweet_xml, "~> 0.7", optional: true},
-      {:excoveralls, "~> 0.10", only: :test},
-      {:req, "~> 0.3", only: :test}
+      {:excoveralls, "~> 0.10", only: :test}
     ]
   end
 
@@ -59,19 +64,21 @@ defmodule ExAws.Mixfile do
     [
       description: description(),
       files: ["priv", "lib", "config", "mix.exs", "CHANGELOG.md", "README*", "LICENSE"],
+      exclude_patterns: ["_build", "deps", "test", "*~"],
       maintainers: ["Bernard Duggan", "Ben Wilson"],
       licenses: ["MIT"],
       links: %{
         Changelog: "#{@source_url}/blob/master/CHANGELOG.md",
         GitHub: @source_url
-      }
+      },
+      exclude_patterns: [~r/.*~/]
     ]
   end
 
   defp description do
     """
     AWS client for Elixir. Currently supports Dynamo, DynamoStreams, EC2,
-    Firehose, Kinesis, KMS, Lambda, RRDS, Route53, S3, SES, SNS, SQS, STS
+    Firehose, Kinesis, KMS, Lambda, RRDS, Route53, S3, SES, SNS, SQS, STS and others.
     """
   end
 
