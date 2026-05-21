@@ -2494,6 +2494,7 @@ chime_voice_regions = [
             "ca-west-1" => %{},
             "eu-central-1" => %{},
             "eu-north-1" => %{},
+            "eu-south-2" => %{},
             "eu-west-1" => %{},
             "eu-west-2" => %{},
             "sa-east-1" => %{},
